@@ -1,5 +1,6 @@
 import os
 import warnings
+from functools import partialmethod
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -119,221 +120,6 @@ class NinjaAPI:
         self.default_router = default_router or Router()
         self.add_router("", self.default_router)
 
-    def get(
-        self,
-        path: str,
-        *,
-        auth: Any = NOT_SET,
-        throttle: Union[BaseThrottle, List[BaseThrottle], NOT_SET_TYPE] = NOT_SET,
-        response: Any = NOT_SET,
-        operation_id: Optional[str] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        deprecated: Optional[bool] = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        url_name: Optional[str] = None,
-        include_in_schema: bool = True,
-        openapi_extra: Optional[Dict[str, Any]] = None,
-    ) -> Callable[[TCallable], TCallable]:
-        """
-        `GET` operation. See <a href="../operations-parameters">operations
-        parameters</a> reference.
-        """
-        return self.default_router.get(
-            path,
-            auth=auth is NOT_SET and self.auth or auth,
-            throttle=throttle is NOT_SET and self.throttle or throttle,
-            response=response,
-            operation_id=operation_id,
-            summary=summary,
-            description=description,
-            tags=tags,
-            deprecated=deprecated,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            url_name=url_name,
-            include_in_schema=include_in_schema,
-            openapi_extra=openapi_extra,
-        )
-
-    def post(
-        self,
-        path: str,
-        *,
-        auth: Any = NOT_SET,
-        throttle: Union[BaseThrottle, List[BaseThrottle], NOT_SET_TYPE] = NOT_SET,
-        response: Any = NOT_SET,
-        operation_id: Optional[str] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        deprecated: Optional[bool] = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        url_name: Optional[str] = None,
-        include_in_schema: bool = True,
-        openapi_extra: Optional[Dict[str, Any]] = None,
-    ) -> Callable[[TCallable], TCallable]:
-        """
-        `POST` operation. See <a href="../operations-parameters">operations
-        parameters</a> reference.
-        """
-        return self.default_router.post(
-            path,
-            auth=auth is NOT_SET and self.auth or auth,
-            throttle=throttle is NOT_SET and self.throttle or throttle,
-            response=response,
-            operation_id=operation_id,
-            summary=summary,
-            description=description,
-            tags=tags,
-            deprecated=deprecated,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            url_name=url_name,
-            include_in_schema=include_in_schema,
-            openapi_extra=openapi_extra,
-        )
-
-    def delete(
-        self,
-        path: str,
-        *,
-        auth: Any = NOT_SET,
-        throttle: Union[BaseThrottle, List[BaseThrottle], NOT_SET_TYPE] = NOT_SET,
-        response: Any = NOT_SET,
-        operation_id: Optional[str] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        deprecated: Optional[bool] = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        url_name: Optional[str] = None,
-        include_in_schema: bool = True,
-        openapi_extra: Optional[Dict[str, Any]] = None,
-    ) -> Callable[[TCallable], TCallable]:
-        """
-        `DELETE` operation. See <a href="../operations-parameters">operations
-        parameters</a> reference.
-        """
-        return self.default_router.delete(
-            path,
-            auth=auth is NOT_SET and self.auth or auth,
-            throttle=throttle is NOT_SET and self.throttle or throttle,
-            response=response,
-            operation_id=operation_id,
-            summary=summary,
-            description=description,
-            tags=tags,
-            deprecated=deprecated,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            url_name=url_name,
-            include_in_schema=include_in_schema,
-            openapi_extra=openapi_extra,
-        )
-
-    def patch(
-        self,
-        path: str,
-        *,
-        auth: Any = NOT_SET,
-        throttle: Union[BaseThrottle, List[BaseThrottle], NOT_SET_TYPE] = NOT_SET,
-        response: Any = NOT_SET,
-        operation_id: Optional[str] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        deprecated: Optional[bool] = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        url_name: Optional[str] = None,
-        include_in_schema: bool = True,
-        openapi_extra: Optional[Dict[str, Any]] = None,
-    ) -> Callable[[TCallable], TCallable]:
-        """
-        `PATCH` operation. See <a href="../operations-parameters">operations
-        parameters</a> reference.
-        """
-        return self.default_router.patch(
-            path,
-            auth=auth is NOT_SET and self.auth or auth,
-            throttle=throttle is NOT_SET and self.throttle or throttle,
-            response=response,
-            operation_id=operation_id,
-            summary=summary,
-            description=description,
-            tags=tags,
-            deprecated=deprecated,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            url_name=url_name,
-            include_in_schema=include_in_schema,
-            openapi_extra=openapi_extra,
-        )
-
-    def put(
-        self,
-        path: str,
-        *,
-        auth: Any = NOT_SET,
-        throttle: Union[BaseThrottle, List[BaseThrottle], NOT_SET_TYPE] = NOT_SET,
-        response: Any = NOT_SET,
-        operation_id: Optional[str] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        deprecated: Optional[bool] = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        url_name: Optional[str] = None,
-        include_in_schema: bool = True,
-        openapi_extra: Optional[Dict[str, Any]] = None,
-    ) -> Callable[[TCallable], TCallable]:
-        """
-        `PUT` operation. See <a href="../operations-parameters">operations
-        parameters</a> reference.
-        """
-        return self.default_router.put(
-            path,
-            auth=auth is NOT_SET and self.auth or auth,
-            throttle=throttle is NOT_SET and self.throttle or throttle,
-            response=response,
-            operation_id=operation_id,
-            summary=summary,
-            description=description,
-            tags=tags,
-            deprecated=deprecated,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            url_name=url_name,
-            include_in_schema=include_in_schema,
-            openapi_extra=openapi_extra,
-        )
-
     def api_operation(
         self,
         methods: List[str],
@@ -374,6 +160,12 @@ class NinjaAPI:
             include_in_schema=include_in_schema,
             openapi_extra=openapi_extra,
         )
+
+    get = partialmethod(api_operation, ["GET"])
+    post = partialmethod(api_operation, ["POST"])
+    delete = partialmethod(api_operation, ["DELETE"])
+    patch = partialmethod(api_operation, ["PATCH"])
+    put = partialmethod(api_operation, ["PUT"])
 
     def add_router(
         self,
