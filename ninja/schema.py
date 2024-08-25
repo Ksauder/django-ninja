@@ -17,49 +17,65 @@ dotted attributes and resolver methods. For example::
             return f"{obj.first_name} {obj.last_name}"
 
 """
+
+import datetime
+import itertools
 import warnings
+from dataclasses import asdict
+from decimal import Decimal
 from typing import (
     Any,
     Callable,
     Dict,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Set,
+    Tuple,
     Type,
     TypeVar,
     Union,
+    cast,
     no_type_check,
-    Optional,
-    List,
 )
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Type, Union, cast
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar, Union, no_type_check
-from decimal import Decimal
-import datetime
 from uuid import UUID
-import itertools
 
 import pydantic
-from django.db.models import Manager, QuerySet, ManyToManyRel, ManyToOneRel, Model, ManyToManyField
 from django.db.models import Field as DjangoField
+from django.db.models import (
+    Manager,
+    ManyToManyField,
+    ManyToManyRel,
+    ManyToOneRel,
+    Model,
+    QuerySet,
+)
 from django.db.models.fields.files import FieldFile
 from django.template import Variable, VariableDoesNotExist
-from pydantic import Field, IPvAnyAddress, BaseModel, ValidationInfo, model_validator, validator
+from pydantic import (
+    BaseModel,
+    Field,
+    IPvAnyAddress,
+    ValidationInfo,
+    model_validator,
+    validator,
+)
 from pydantic import create_model as create_pydantic_model
 from pydantic._internal._model_construction import ModelMetaclass
-# from pydantic.functional_validators import ModelWrapValidatorHandler
-from pydantic.json_schema import GenerateJsonSchema, JsonSchemaValue
 from pydantic.dataclasses import dataclass
 from pydantic.fields import FieldInfo
 from pydantic.functional_validators import ModelWrapValidatorHandler
+
+# from pydantic.functional_validators import ModelWrapValidatorHandler
+from pydantic.json_schema import GenerateJsonSchema, JsonSchemaValue
 from pydantic_core import PydanticUndefined, core_schema
 from typing_extensions import dataclass_transform
-from django.db.models import Model as DjangoModel
 
-from ninja.signature.utils import get_args_names, has_kwargs
 # from ninja.types import DictStrAny
 from ninja.errors import ConfigError
+from ninja.signature.utils import get_args_names, has_kwargs
 from ninja.types import DictStrAny
-
-import inspect
-from devtools import debug
 
 pydantic_version = list(map(int, pydantic.VERSION.split(".")[:2]))
 assert pydantic_version >= [2, 0], "Pydantic 2.0+ required"
@@ -67,64 +83,65 @@ assert pydantic_version >= [2, 0], "Pydantic 2.0+ required"
 __all__ = ["BaseModel", "Field", "validator", "DjangoGetter", "Schema"]
 # __all__ = ["create_m2m_link_type", "get_schema_field", "get_related_field_schema"]
 
-S = TypeVar("S", bound="Schema")
+S = TypeVar("S", bound="Schema")  # does this bypass circular import issues?
+Abstract = TypeVar("Abstract")
+
 
 @dataclass
 class MetaConf:
-    model: Any
-    fields: Optional[List[str]] = None
+    model: Optional[Any] = None
+    fields: Union[List[str], Literal["__all__"], None] = None
     exclude: Union[List[str], str, None] = None
     fields_optional: Union[List[str], str, None] = None
     depth: int = 0
 
-    @staticmethod
-    def from_schema_class(name: str, namespace: dict) -> "MetaConf":
+    @classmethod
+    def from_class_namepace(cls, name: str, namespace: dict) -> Union["MetaConf", None]:
+        """Check namespace for Meta or Config and create MetaConf from those classes or return None"""
         if "Meta" in namespace:
-            meta = namespace["Meta"]
-            model = meta.model
-            fields = getattr(meta, "fields", None)
-            exclude = getattr(meta, "exclude", None)
-            optional_fields = getattr(meta, "fields_optional", None)
-            depth = getattr(meta, "depth", None)
-
+            conf = cls.from_meta(namespace["Meta"])
         elif "Config" in namespace:
-            config = namespace["Config"]
-            model = config.model
-            fields = getattr(config, "model_fields", None)
-            exclude = getattr(config, "model_exclude", None)
-            optional_fields = getattr(config, "model_fields_optional", None)
-            depth = getattr(config, "depth", None)
-
+            conf = cls.from_config(namespace["Config"])
+            if not conf:
+                # No model so this isn't a "ModelSchema" config
+                return None
             warnings.warn(
                 "The use of `Config` class is deprecated for ModelSchema, use 'Meta' instead",
                 DeprecationWarning,
                 stacklevel=2,
             )
-
         else:
-            raise ConfigError(
-                f"ModelSchema class '{name}' requires a 'Meta' (or a 'Config') subclass"
-            )
+            return None
 
-        assert issubclass(model, DjangoModel)
+        return conf
 
-        if not fields and not exclude:
-            raise ConfigError(
-                "Creating a ModelSchema without either the 'fields' attribute"
-                " or the 'exclude' attribute is prohibited"
-            )
+    @staticmethod
+    def from_config(config: Any) -> Union["MetaConf", None]:
+        confdict = {
+            "model": getattr(config, "model", None),
+            "fields": getattr(config, "fields", None),
+            "exclude": getattr(config, "exclude", None),
+            "fields_optional": getattr(config, "fields_optional", None),
+            "depth": getattr(config, "depth", None),
+        }
+        if not confdict.get("model"):
+            # this isn't a "ModelSchema" config class
+            return None
 
-        if fields == "__all__":
-            fields = None
-            # ^ when None is passed to create_schema - all fields are selected
+        return MetaConf(**{k: v for k, v in confdict.items() if v is not None})
 
-        return MetaConf(
-            model=model,
-            fields=fields,
-            exclude=exclude,
-            fields_optional=optional_fields,
-            depth=depth
-        )
+    @staticmethod
+    def from_meta(meta: Any) -> "MetaConf":
+        confdict = {
+            "model": getattr(meta, "model", None),
+            "fields": getattr(meta, "fields", None),
+            "exclude": getattr(meta, "exclude", None),
+            "fields_optional": getattr(meta, "fields_optional", None),
+            "depth": getattr(meta, "depth", None),
+        }
+
+        return MetaConf(**{k: v for k, v in confdict.items() if v is not None})
+
 
 class DjangoGetter:
     __slots__ = ("_obj", "_schema_cls", "_context", "__dict__")
@@ -135,9 +152,6 @@ class DjangoGetter:
         self._context = context
 
     def __getattr__(self, key: str) -> Any:
-        # if key.startswith("__pydantic"):
-        #     return getattr(self._obj, key)
-
         resolver = self._schema_cls._ninja_resolvers.get(key)
         if resolver:
             value = resolver(getter=self)
@@ -158,12 +172,6 @@ class DjangoGetter:
                     except VariableDoesNotExist as e:
                         raise AttributeError(key) from e
         return self._convert_result(value)
-
-    # def get(self, key: Any, default: Any = None) -> Any:
-    #     try:
-    #         return self[key]
-    #     except KeyError:
-    #         return default
 
     def _convert_result(self, result: Any) -> Any:
         if isinstance(result, Manager):
@@ -213,22 +221,6 @@ class Resolver:
         raise NotImplementedError(
             "Non static resolves are not supported yet"
         )  # pragma: no cover
-        # return self._func(self._fake_instance(getter), getter._obj)
-
-    # def _fake_instance(self, getter: DjangoGetter) -> "Schema":
-    #     """
-    #     Generate a partial schema instance that can be used as the ``self``
-    #     attribute of resolver functions.
-    #     """
-
-    #     class PartialSchema(Schema):
-    #         def __getattr__(self, key: str) -> Any:
-    #             value = getattr(getter, key)
-    #             field = getter._schema_cls.model_fields[key]
-    #             value = field.validate(value, values={}, loc=key, cls=None)[0]
-    #             return value
-
-    #     return PartialSchema()
 
 
 @dataclass_transform(kw_only_default=True, field_specifiers=(Field,))
@@ -268,17 +260,31 @@ class ModelSchemaMetaclass(ResolverMetaclass):
         namespace: dict,
         **kwargs,
     ):
-        debug(name)
-        if getattr(namespace, "Meta", None):
-            debug(namespace.Meta)
-        if name == "MySchema":
-            for base in bases:
-                inspect.getmembers(base)
-        # if Meta:
-        #   use Meta
-        #   overwrite __ninja_meta__ if exists
-        # elif __ninja_meta__:
-        #   
+        meta_conf = MetaConf.from_class_namepace(name, namespace)
+
+        if meta_conf:
+            if meta_conf.fields == "__all__":
+                meta_conf.fields = None
+
+            # update meta_conf with bases
+            combined = {}
+            for base in reversed(bases):
+                combined.update(getattr(base, "__ninja_meta__", {}))
+            combined.update(asdict(meta_conf))
+
+            # meta_conf is a dict from now on
+            meta_conf = combined
+
+            if meta_conf["model"]:
+                fields = factory.convert_django_fields(**meta_conf)
+                for field, val in fields.items():
+                    # if the field exists on the Schema, we don't overwrite it
+                    if not namespace.get("__annotations__", {}).get(field):
+                        # set type
+                        namespace.setdefault("__annotations__", {})[field] = val[0]
+                        # and default value
+                        namespace[field] = val[1]
+
         cls = super().__new__(
             mcs,
             name,
@@ -286,41 +292,8 @@ class ModelSchemaMetaclass(ResolverMetaclass):
             namespace,
             **kwargs,
         )
-        if name == "NewBase":
-            debug(inspect.getmembers(cls))
-        # for base in reversed(bases):
-        #     if (
-        #         _is_modelschema_class_defined
-        #         and issubclass(base, ModelSchema)
-        #         and base == ModelSchema
-        #     ):
-        #         meta_conf = MetaConf.from_schema_class(name, namespace)
-
-        #         custom_fields = []
-        #         annotations = namespace.get("__annotations__", {})
-        #         for attr_name, type in annotations.items():
-        #             if attr_name.startswith("_"):
-        #                 continue
-        #             default = namespace.get(attr_name, ...)
-        #             custom_fields.append((attr_name, type, default))
-
-        #         # # cls.__doc__ = namespace.get("__doc__", config.model.__doc__)
-        #         # cls.__fields__ = {}  # forcing pydantic recreate
-        #         # # assert False, "!! cls.model_fields"
-
-        #         # print(config.model, name, fields, exclude, "!!")
-
-        #         model_schema = create_schema(
-        #             meta_conf.model,
-        #             name=name,
-        #             fields=meta_conf.fields,
-        #             exclude=meta_conf.exclude,
-        #             optional_fields=meta_conf.fields_optional,
-        #             custom_fields=custom_fields,
-        #             base_class=cls,
-        #         )
-        #         model_schema.__doc__ = cls.__doc__
-        #         return model_schema
+        if meta_conf:
+            cls.__ninja_meta__ = meta_conf
 
         return cls
 
@@ -346,7 +319,6 @@ class NinjaGenerateJsonSchema(GenerateJsonSchema):
             result["default"] = default
 
         return result
-
 
 
 # keep_lazy seems not needed as .title forces translation anyway
@@ -441,6 +413,7 @@ def create_m2m_link_type(type_: Type[TModel]) -> Type[TModel]:
 
     return M2MLink
 
+
 class Schema(BaseModel, metaclass=ModelSchemaMetaclass):
     class Config:
         from_attributes = True  # aka orm_mode
@@ -518,15 +491,15 @@ class SchemaFactory:
             depth=depth,
             fields=fields,
             exclude=exclude,
-            optional_fields=optional_fields,
+            fields_optional=optional_fields,
         )
-        
+
         if custom_fields:
             for fld_name, python_type, field_info in custom_fields:
                 # if not isinstance(field_info, FieldInfo):
                 #     field_info = Field(field_info)
                 definitions[fld_name] = (python_type, field_info)
-        
+
         schema = create_pydantic_model(
             name,
             __config__=None,
@@ -557,22 +530,22 @@ class SchemaFactory:
         depth: int = 0,
         fields: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
-        optional_fields: Optional[List[str]] = None,
+        fields_optional: Optional[List[str]] = None,
     ) -> Dict[str, Tuple[Any, Any]]:
         if fields and exclude:
             raise ConfigError("Only one of 'fields' or 'exclude' should be set.")
 
         model_fields_list = list(self._selected_model_fields(model, fields, exclude))
-        if optional_fields:
-            if optional_fields == "__all__":
-                optional_fields = [f.name for f in model_fields_list]
+        if fields_optional:
+            if fields_optional == "__all__":
+                fields_optional = [f.name for f in model_fields_list]
 
         definitions = {}
         for fld in model_fields_list:
             python_type, field_info = get_schema_field(
                 fld,
                 depth=depth,
-                optional=optional_fields and (fld.name in optional_fields),
+                optional=fields_optional and (fld.name in fields_optional),
             )
             definitions[fld.name] = (python_type, field_info)
 
@@ -647,9 +620,6 @@ class SchemaFactory:
 factory = SchemaFactory()
 
 create_schema = factory.create_schema
-
-
-
 
 
 @no_type_check
@@ -729,7 +699,9 @@ def get_schema_field(
 
 
 @no_type_check
-def get_related_field_schema(field: DjangoField, *, depth: int) -> Tuple["OpenAPISchema"]:
+def get_related_field_schema(
+    field: DjangoField, *, depth: int
+) -> Tuple["OpenAPISchema"]:
     from ninja.schema import create_schema
 
     model = field.related_model
