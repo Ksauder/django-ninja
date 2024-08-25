@@ -260,6 +260,7 @@ class ModelSchemaMetaclass(ResolverMetaclass):
         namespace: dict,
         **kwargs,
     ):
+        # NOTE: could get rid of Meta and just use Config, or the inverse
         meta_conf = MetaConf.from_class_namepace(name, namespace)
 
         if meta_conf:
