@@ -7,7 +7,7 @@ from django.db import models
 from django.db.models import Manager
 
 from ninja.errors import ConfigError
-from ninja.orm import create_schema
+from ninja.schema import create_schema
 from ninja.orm.shortcuts import L, S
 
 
@@ -519,7 +519,7 @@ def test_duplicate_schema_names():
     from django.db import models
 
     from ninja import Schema
-    from ninja.orm import create_schema
+    from ninja.schema import create_schema
 
     class TestModelDuplicate(models.Model):
         field1 = models.CharField()

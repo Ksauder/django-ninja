@@ -1,7 +1,7 @@
 from typing import Any, List, Type
 
-from ninja import Schema
-from ninja.orm.factory import create_schema
+from ninja.schema import Schema, create_schema
+
 
 __all__ = ["S", "L"]
 

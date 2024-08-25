@@ -9,7 +9,6 @@ from ninja.files import UploadedFile
 from ninja.filter_schema import FilterSchema
 from ninja.main import NinjaAPI
 from ninja.openapi.docs import Redoc, Swagger
-from ninja.orm import ModelSchema
 from ninja.params import (
     Body,
     BodyEx,
@@ -30,6 +29,7 @@ from ninja.params import (
 from ninja.patch_dict import PatchDict
 from ninja.router import Router
 from ninja.schema import Schema
+ModelSchema = Schema
 
 __all__ = [
     "Field",

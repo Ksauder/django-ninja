@@ -1,7 +1,7 @@
 from django.db import models
 
 from ninja import NinjaAPI
-from ninja.orm import create_schema
+from ninja.schema import create_schema
 from ninja.testing import TestClient
 
 
