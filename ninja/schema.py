@@ -98,6 +98,7 @@ class MetaConf:
     @classmethod
     def from_class_namepace(cls, name: str, namespace: dict) -> Union["MetaConf", None]:
         """Check namespace for Meta or Config and create MetaConf from those classes or return None"""
+        # TODO: ensure the exceptions raised from here originally are still raised somewhere
         if "Meta" in namespace:
             conf = cls.from_meta(namespace["Meta"])
         elif "Config" in namespace:
@@ -263,17 +264,21 @@ class ModelSchemaMetaclass(ResolverMetaclass):
         # NOTE: could get rid of Meta and just use Config, or the inverse
         meta_conf = MetaConf.from_class_namepace(name, namespace)
 
+        # TODO: make sure exceptions are raised for bad states with the final Meta/Config
+        # probably happens right before fields are created?
         if meta_conf:
             if meta_conf.fields == "__all__":
                 meta_conf.fields = None
 
             # update meta_conf with bases
             combined = {}
+            # TODO: ensure this order makes sense for base Meta inheritance
             for base in reversed(bases):
                 combined.update(getattr(base, "__ninja_meta__", {}))
-            combined.update(asdict(meta_conf))
+            combined.update(**{k:v for k,v in asdict(meta_conf).items() if v is not None})
+            # FIXME: better definition of MetaConf fields and field requirements
 
-            # meta_conf is a dict from now on
+            # meta_conf is a dict with 
             meta_conf = combined
 
             if meta_conf["model"]:
