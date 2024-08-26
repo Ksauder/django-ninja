@@ -1,5 +1,6 @@
 from typing import List
 
+from devtools import debug
 from typing_extensions import Annotated
 
 from ninja import Body, Cookie, Form, Header, NinjaAPI, Path, Query, Schema
@@ -83,7 +84,7 @@ def test_headers():
 
 def test_openapi_schema():
     schema = api.get_openapi_schema()["paths"]
-    print(schema)
+    debug(schema)
     assert schema == {
         "/api/multi/{p}": {
             "post": {
