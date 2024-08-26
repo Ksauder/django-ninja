@@ -1,17 +1,17 @@
-from devtools import debug
 from typing import Optional
 
-from pydantic import BaseModel
-
-from ninja import Schema, Field
+from devtools import debug
 from django.db import models
+
+from ninja import Schema
+from ninja.schema import create_schema
 
 
 class AnotherParentModel(models.Model):
-        parent_field = models.CharField()
+    parent_field = models.CharField()
 
-        class Meta:
-            app_label = "tests"
+    class Meta:
+        app_label = "tests"
 
 
 class DocumentModel(models.Model):
@@ -40,20 +40,33 @@ def test_dev_schema():
             model = DocumentModel
             exclude = ["sensitive"]
 
+        # class Config:  # Meta does only models.Model things? Config does pydantic things?
+        # stuff
 
     class DocumentGetSchema(_DocumentSchema):
         class Meta:
             fields = "__all__"
 
-
     class DocumentPostSchema(_DocumentSchema):
         class Meta:
             exclude = ["sensitive", "id"]
-
 
     class DocumentPatchSchema(_DocumentSchema):
         class Meta:
             fields_optional = "__all__"
 
-    nb = DocumentGetSchema(custom_field=SupportGetSchema(parent_field="y"), name="name", stuff="morestuff")
+    DynSchema = create_schema(
+        DocumentModel, exclude=["sensitive"], primary_key_optional=False
+    )
+    nb = DocumentGetSchema(
+        custom_field=SupportGetSchema(parent_field="y"), name="name", stuff="morestuff"
+    )
     debug(nb)
+    ndyn = DynSchema(
+        id=1,
+        custom_field=SupportGetSchema(parent_field="y"),
+        name="name",
+        stuff="morestuff",
+    )
+    debug(ndyn.json_schema())
+    # nb2 = DocumentPostSchema(custom_field=SupportGetSchema(parent_field="y"), name="name", stuff="morestuff")

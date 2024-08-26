@@ -42,6 +42,7 @@ from typing import (
 from uuid import UUID
 
 import pydantic
+from devtools import debug
 from django.db.models import Field as DjangoField
 from django.db.models import (
     Manager,
@@ -83,17 +84,32 @@ assert pydantic_version >= [2, 0], "Pydantic 2.0+ required"
 __all__ = ["BaseModel", "Field", "validator", "DjangoGetter", "Schema"]
 # __all__ = ["create_m2m_link_type", "get_schema_field", "get_related_field_schema"]
 
-S = TypeVar("S", bound="Schema")  # does this bypass circular import issues?
-Abstract = TypeVar("Abstract")
+S = TypeVar("S", bound="Schema")
 
 
 @dataclass
 class MetaConf:
+    """
+    model: Django model being used to create the Schema
+    fields: List of field names in the model to use. Defaults to '__all__' which includes all fields
+    exclude: List of field names to exclude
+    optional_fields: List of field names which will be optional, can also take '__all__'
+    depth: If > 0 schema will also be created for the nested ForeignKeys and Many2Many (with the provided depth of lookup)
+    primary_key_optional: Defaults to True, controls if django's primary_key=True field in the provided model is required
+
+    fields_optional: same as optional_fields, deprecated in order to match `create_schema()` API
+    """
+
     model: Optional[Any] = None
     fields: Union[List[str], Literal["__all__"], None] = None
     exclude: Union[List[str], str, None] = None
-    fields_optional: Union[List[str], str, None] = None
+    optional_fields: Union[List[str], Literal["__all__"], None] = None
     depth: int = 0
+    primary_key_optional: bool = True
+    # deprecated
+    fields_optional: Union[List[str], Literal["__all__"], Literal["__unset"], None] = (
+        "__unset"
+    )
 
     @classmethod
     def from_class_namepace(cls, name: str, namespace: dict) -> Union["MetaConf", None]:
@@ -114,16 +130,28 @@ class MetaConf:
         else:
             return None
 
+        if conf.fields_optional == "__unset":
+            warnings.warn(
+                "The use of `fields_optional` is deprecated. Use `optional_fields` instead to match `create_schema()` API",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        else:
+            conf.optional_fields = conf.fields_optional
+
         return conf
 
     @staticmethod
     def from_config(config: Any) -> Union["MetaConf", None]:
+        # FIXME: deprecate usage of Config to pass ORM options?
         confdict = {
             "model": getattr(config, "model", None),
             "fields": getattr(config, "model_fields", None),
             "exclude": getattr(config, "exclude", None),
-            "fields_optional": getattr(config, "fields_optional", None),
+            "optional_fields": getattr(config, "optional_fields", None),
             "depth": getattr(config, "depth", None),
+            "primary_key_optional": getattr(config, "primary_key_optional", None),
+            "fields_optional": getattr(config, "fields_optional", None),
         }
         if not confdict.get("model"):
             # this isn't a "ModelSchema" config class
@@ -137,8 +165,10 @@ class MetaConf:
             "model": getattr(meta, "model", None),
             "fields": getattr(meta, "fields", None),
             "exclude": getattr(meta, "exclude", None),
-            "fields_optional": getattr(meta, "fields_optional", None),
+            "optional_fields": getattr(meta, "optional_fields", None),
             "depth": getattr(meta, "depth", None),
+            "primary_key_optional": getattr(meta, "primary_key_optional", None),
+            "fields_optional": getattr(meta, "fields_optional", None),
         }
 
         return MetaConf(**{k: v for k, v in confdict.items() if v is not None})
@@ -269,16 +299,16 @@ class ModelSchemaMetaclass(ResolverMetaclass):
         if meta_conf:
             if meta_conf.fields == "__all__":
                 meta_conf.fields = None
+            meta_conf = asdict(meta_conf)
+
+            # fields_optional is deprecated
+            del meta_conf["fields_optional"]
 
             # update meta_conf with bases
             combined = {}
-            # TODO: ensure this order makes sense for base Meta inheritance
             for base in reversed(bases):
                 combined.update(getattr(base, "__ninja_meta__", {}))
-            combined.update(
-                **{k: v for k, v in asdict(meta_conf).items() if v is not None}
-            )
-            # FIXME: better definition of MetaConf fields and field requirements
+            combined.update(**{k: v for k, v in meta_conf.items() if v is not None})
 
             # meta_conf is a dict with
             meta_conf = combined
@@ -485,6 +515,7 @@ class SchemaFactory:
         optional_fields: Optional[List[str]] = None,
         custom_fields: Optional[List[Tuple[str, Any, Any]]] = None,
         base_class: Type[Schema] = Schema,
+        primary_key_optional: bool = True,
     ) -> Type[Schema]:
         schema: Type[Schema]
         name = name or model.__name__
@@ -500,7 +531,8 @@ class SchemaFactory:
             depth=depth,
             fields=fields,
             exclude=exclude,
-            fields_optional=optional_fields,
+            optional_fields=optional_fields,
+            primary_key_optional=primary_key_optional,
         )
 
         if custom_fields:
@@ -537,22 +569,24 @@ class SchemaFactory:
         depth: int = 0,
         fields: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
-        fields_optional: Optional[List[str]] = None,
+        optional_fields: Optional[List[str]] = None,
+        primary_key_optional: bool = True,
     ) -> Dict[str, Tuple[Any, Any]]:
         if fields and exclude:
             raise ConfigError("Only one of 'fields' or 'exclude' should be set.")
 
         model_fields_list = list(self._selected_model_fields(model, fields, exclude))
-        if fields_optional:
-            if fields_optional == "__all__":
-                fields_optional = [f.name for f in model_fields_list]
+        if optional_fields:
+            if optional_fields == "__all__":
+                optional_fields = [f.name for f in model_fields_list]
 
         definitions = {}
         for fld in model_fields_list:
             python_type, field_info = get_schema_field(
                 fld,
                 depth=depth,
-                optional=fields_optional and (fld.name in fields_optional),
+                optional=optional_fields and (fld.name in optional_fields),
+                primary_key_optional=primary_key_optional,
             )
             definitions[fld.name] = (python_type, field_info)
 
@@ -631,7 +665,11 @@ create_schema = factory.create_schema
 
 @no_type_check
 def get_schema_field(
-    field: DjangoField, *, depth: int = 0, optional: bool = False
+    field: DjangoField,
+    *,
+    depth: int = 0,
+    optional: bool = False,
+    primary_key_optional: bool = True,
 ) -> Tuple:
     "Returns pydantic field from django's model field"
     alias = None
@@ -671,7 +709,7 @@ def get_schema_field(
         internal_type = field.get_internal_type()
         python_type = TYPES[internal_type]
 
-        if field.primary_key or blank or null or optional:
+        if (field.primary_key and primary_key_optional) or blank or null or optional:
             default = None
             nullable = True
 
