@@ -68,10 +68,10 @@ def test_schema():
     op5 = schema["paths"]["/api/operation5"]["get"]
 
     assert op1["operationId"] == "my_id"
-    assert op2["operationId"] == "test_openapi_params_operation2"
-    assert op3["operationId"] == "test_openapi_params_operation3"
-    assert op4["operationId"] == "test_openapi_params_operation4"
-    assert op5["operationId"] == "test_openapi_params_operation5"
+    assert op2["operationId"] == "tests_test_openapi_params_operation2"
+    assert op3["operationId"] == "tests_test_openapi_params_operation3"
+    assert op4["operationId"] == "tests_test_openapi_params_operation4"
+    assert op5["operationId"] == "tests_test_openapi_params_operation5"
 
     assert op1["summary"] == "Operation 1"
     assert op2["summary"] == "Operation2"

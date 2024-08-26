@@ -805,7 +805,7 @@ def test_unique_operation_ids(capsys):
 
     api.get_openapi_schema()
     captured = capsys.readouterr()
-    assert '"test_openapi_schema_same_name" is already used ' in captured.out
+    assert '"tests_test_openapi_schema_same_name" is already used ' in captured.out
 
 
 def test_docs_decorator():
