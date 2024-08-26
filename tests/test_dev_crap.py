@@ -7,7 +7,7 @@ from ninja import Schema, Field
 from django.db import models
 
 
-class ParentModel(models.Model):
+class AnotherParentModel(models.Model):
         parent_field = models.CharField()
 
         class Meta:
@@ -27,7 +27,7 @@ class DocumentModel(models.Model):
 def test_dev_schema():
     class SupportGetSchema(Schema):
         class Meta:
-            model = ParentModel
+            model = AnotherParentModel
             fields = "__all__"
 
     # if ModelSchemaMetaclass and create_schema mirror each other properly, these could be create_schema()s

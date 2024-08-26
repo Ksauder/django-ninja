@@ -120,7 +120,7 @@ class MetaConf:
     def from_config(config: Any) -> Union["MetaConf", None]:
         confdict = {
             "model": getattr(config, "model", None),
-            "fields": getattr(config, "fields", None),
+            "fields": getattr(config, "model_fields", None),
             "exclude": getattr(config, "exclude", None),
             "fields_optional": getattr(config, "fields_optional", None),
             "depth": getattr(config, "depth", None),
@@ -275,13 +275,16 @@ class ModelSchemaMetaclass(ResolverMetaclass):
             # TODO: ensure this order makes sense for base Meta inheritance
             for base in reversed(bases):
                 combined.update(getattr(base, "__ninja_meta__", {}))
-            combined.update(**{k:v for k,v in asdict(meta_conf).items() if v is not None})
+            combined.update(
+                **{k: v for k, v in asdict(meta_conf).items() if v is not None}
+            )
             # FIXME: better definition of MetaConf fields and field requirements
 
-            # meta_conf is a dict with 
+            # meta_conf is a dict with
             meta_conf = combined
 
             if meta_conf["model"]:
+                debug(meta_conf)
                 fields = factory.convert_django_fields(**meta_conf)
                 for field, val in fields.items():
                     # if the field exists on the Schema, we don't overwrite it
@@ -506,6 +509,9 @@ class SchemaFactory:
                 #     field_info = Field(field_info)
                 definitions[fld_name] = (python_type, field_info)
 
+        if name in self.schema_names:
+            name = self._get_unique_name(name)
+
         schema = create_pydantic_model(
             name,
             __config__=None,
@@ -515,19 +521,14 @@ class SchemaFactory:
             **definitions,
         )  # type: ignore
 
-        self.add_schema(key, name, schema)
+        self.schemas[key] = schema
+        self.schema_names.add(name)
         return schema
 
     def get_schema(self, key: SchemaKey) -> Union[Type[Schema], None]:
         if key in self.schemas:
             return self.schemas[key]
         return None
-
-    def add_schema(self, key: SchemaKey, name: str, schema: Type[Schema]):
-        if name in self.schema_names:
-            name = self._get_unique_name(name)
-        self.schemas[key] = schema
-        self.schema_names.add(name)
 
     def convert_django_fields(
         self,
