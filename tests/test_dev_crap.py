@@ -1,10 +1,10 @@
 from typing import Optional
 
-from devtools import debug
 from django.db import models
 
-from ninja import Schema
+from ninja import NinjaAPI, Schema
 from ninja.schema import create_schema
+from ninja.testing import TestClient
 
 
 class AnotherParentModel(models.Model):
@@ -55,18 +55,79 @@ def test_dev_schema():
         class Meta:
             fields_optional = "__all__"
 
+    api = NinjaAPI()
+    client = TestClient(api)
+
+    @api.get("/test", response=DocumentGetSchema)
+    def get_doc(request):
+        return DocumentGetSchema(
+            custom_field=SupportGetSchema(parent_field="y"),
+            name="name",
+            stuff="morestuff",
+        )
+
+    res = client.get("/test")
+    assert res.json() == {
+        "custom_field": {
+            "id": None,
+            "parent_field": "y",
+        },
+        "id": None,
+        "name": "name",
+        "stuff": "morestuff",
+    }
+
     DynSchema = create_schema(
         DocumentModel, exclude=["sensitive"], primary_key_optional=False
     )
     nb = DocumentGetSchema(
         custom_field=SupportGetSchema(parent_field="y"), name="name", stuff="morestuff"
     )
-    debug(nb)
+
+    assert nb.dict() == {
+        "custom_field": {
+            "id": None,
+            "parent_field": "y",
+        },
+        "id": None,
+        "name": "name",
+        "stuff": "morestuff",
+    }
+
     ndyn = DynSchema(
         id=1,
         custom_field=SupportGetSchema(parent_field="y"),
         name="name",
         stuff="morestuff",
     )
-    debug(ndyn.json_schema())
+
+    assert ndyn.dict() == {
+        "id": 1,
+        "name": "name",
+        "stuff": "morestuff",
+    }
+
+    assert ndyn.json_schema() == {
+        "properties": {
+            "id": {
+                "title": "Id",
+                "type": "integer",
+            },
+            "name": {
+                "title": "Name",
+                "type": "string",
+            },
+            "stuff": {
+                "title": "Stuff",
+                "type": "string",
+            },
+        },
+        "required": [
+            "id",
+            "name",
+            "stuff",
+        ],
+        "title": "DocumentModel",
+        "type": "object",
+    }
     # nb2 = DocumentPostSchema(custom_field=SupportGetSchema(parent_field="y"), name="name", stuff="morestuff")
