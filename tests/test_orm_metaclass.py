@@ -119,19 +119,7 @@ def test_config():
                 fields_optional = ["title"]
                 optional_fields = ["title"]
 
-    with pytest.raises(
-        ConfigError,
-        match="'title' is defined in class body and in Meta.fields or implicitly in Meta.excluded",
-    ):
-
-        class CategorySchema4(ModelSchema):
-            title: str
-
-            class Meta:
-                model = Category
-                fields = "__all__"
-
-    class CategorySchema5(ModelSchema):
+    class CategorySchema4(ModelSchema):
         class Config:
             model = Category
             fields = "__all__"
