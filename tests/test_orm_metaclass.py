@@ -98,12 +98,6 @@ def test_config():
         class CategorySchema1(ModelSchema):
             class Meta:
                 model = Category
-
-    with pytest.raises(ValidationError, match="Specify either `exclude` or `fields`"):
-
-        class CategorySchema2(ModelSchema):
-            class Meta:
-                model = Category
                 exclude = ["title"]
                 fields = ["title"]
 
@@ -112,14 +106,14 @@ def test_config():
         match="Use only `optional_fields`, `fields_optional` is deprecated.",
     ):
 
-        class CategorySchema3(ModelSchema):
+        class CategorySchema2(ModelSchema):
             class Meta:
                 model = Category
                 fields = "__all__"
                 fields_optional = ["title"]
                 optional_fields = ["title"]
 
-    class CategorySchema4(ModelSchema):
+    class CategorySchema3(ModelSchema):
         class Config:
             model = Category
             fields = "__all__"

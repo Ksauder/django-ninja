@@ -43,9 +43,7 @@ class MetaConf(BaseModel):
 
     @model_validator(mode="after")
     def check_fields(self) -> Self:
-        if self.model and (
-            (not self.exclude and not self.fields) or (self.exclude and self.fields)
-        ):
+        if self.model and (self.exclude and self.fields):
             raise ValueError("Specify either `exclude` or `fields`")
 
         if self.fields_optional:
