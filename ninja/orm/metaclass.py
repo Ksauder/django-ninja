@@ -95,12 +95,6 @@ class ModelSchemaMetaclass(ResolverMetaclass):
 
             fields = factory.convert_django_fields(**meta_conf)
             for field, val in fields.items():
-                # do not allow field to be defined both in the class and
-                # explicitly through `Meta.fields` or implicitly through `Meta.excluded`
-                if namespace.get("__annotations__", {}).get(field):
-                    raise ConfigError(
-                        f"'{field}' is defined in class body and in Meta.fields or implicitly in Meta.excluded"
-                    )
                 # set type
                 namespace.setdefault("__annotations__", {})[field] = val[0]
                 # and default value
