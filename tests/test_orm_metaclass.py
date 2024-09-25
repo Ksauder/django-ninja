@@ -531,3 +531,75 @@ def test_specific_inheritance():
         "title": "ItemInMealsSchema",
         "type": "object",
     }
+
+
+def test_inherited_tables():
+    class Foreign(models.Model):
+        name = models.CharField()
+
+        class Meta:
+            app_label = "tests"
+
+
+    class Item(models.Model):
+        id = models.PositiveIntegerField(primary_key=True)
+        slug = models.CharField(blank=True, null=True)
+        ref = models.ForeignKey(Foreign, on_delete=models.PROTECT)
+
+        class Meta:
+            app_label = "tests"
+            abstract = True
+
+
+    class DiffItem(Item):
+        special = models.CharField()
+
+        class Meta:
+            app_label = "tests"
+
+
+    class ForeignModelSchema(ModelSchema):
+        class Meta:
+            model = Foreign
+            fields = "__all__"
+
+
+    class ItemModelSchema(ModelSchema):
+        ref: ForeignModelSchema
+        class Meta:
+            model = Item
+            fields = "__all__"
+
+    class DiffItemModelSchema(ItemModelSchema):
+        special: str
+
+        class Meta(ItemModelSchema.Meta):
+            model = DiffItem
+
+    class OptionalDiffItemModelSchema(ItemModelSchema):
+        special: str
+        ref: Optional[ForeignModelSchema] = None
+
+        class Meta(ItemModelSchema.Meta):
+            model = DiffItem
+
+    # assert that DiffItemModelSchema did not overwrite ItemModelSchema.ref with a 0 depth 'ref_id:integer' field
+    j = DiffItemModelSchema.model_json_schema()
+    assert not j["properties"].get("ref_id", None)
+    assert j["properties"].get("ref", None)
+    
+    # assert custom annotation can overwrite the ref field
+    j = OptionalDiffItemModelSchema.model_json_schema()
+    assert not j["properties"].get("ref_id", None)
+    assert j["properties"].get("ref", None) == {
+        'anyOf': [
+            {
+                '$ref': '#/$defs/ForeignModelSchema',
+            },
+            {
+                'type': 'null',
+            },
+        ],
+        'default': None,
+    }
+    assert "ref" not in j["required"]

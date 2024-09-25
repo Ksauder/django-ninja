@@ -89,12 +89,17 @@ class ModelSchemaMetaclass(ResolverMetaclass):
             meta_conf = MetaConf.model_validate(conf_dict)
 
         if meta_conf and meta_conf.model:
+            base_model_fields = {}
+            for base in bases:
+                base_model_fields.update(**base.model_fields)
+
             meta_conf = meta_conf.model_dump(exclude_none=True)
 
             fields = factory.convert_django_fields(**meta_conf)
             namespace.setdefault("__annotations__", {})
             for field, val in fields.items():
-                if not namespace["__annotations__"].get(field, None):
+                # don't overwrite custom fields in annotations or previous django fields in base_model_fields
+                if not namespace["__annotations__"].get(field, None) and not base_model_fields.get(field, None):
                     # set type
                     namespace["__annotations__"][field] = val[0]
                     # and default value
