@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, TypeVar
+from typing_extensions import Annotated
 
 import pytest
 from django.db import models
@@ -531,6 +532,41 @@ def test_specific_inheritance():
         "title": "ItemInMealsSchema",
         "type": "object",
     }
+
+
+def test_nullable_wrapper():
+    class NullableWrapper:
+        pass
+
+    T = TypeVar("T")
+    Wrapper = Annotated[Optional[T], NullableWrapper]
+
+    class Item(models.Model):
+        id = models.PositiveIntegerField(primary_key=True)
+        slug = models.CharField(blank=True, null=True)
+
+        class Meta:
+            app_label = "tests"
+
+    class Wrapped(ModelSchema):
+        class Meta:
+            model = Item
+            fields = "__all__"
+            nullable_wrapper = Wrapper
+            primary_key_optional = False
+
+    class Clean(ModelSchema):
+        class Meta:
+            model = Item
+            fields = "__all__"
+            primary_key_optional = False
+
+    w = Wrapped(id=1, slug="slug")
+    assert w.model_fields["slug"].metadata[0] == NullableWrapper
+    assert w.model_fields["slug"].annotation == Optional[str]
+    c = Clean(id=2, slug="slugs")
+    assert len(c.model_fields["slug"].metadata) == 0
+    assert c.model_fields["slug"].annotation == Optional[str]
 
 
 def test_inherited_tables():

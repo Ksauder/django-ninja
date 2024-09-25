@@ -115,6 +115,7 @@ def get_schema_field(
     depth: int = 0,
     optional: bool = False,
     primary_key_optional: bool = True,
+    nullable_wrapper = None,
 ) -> Tuple:
     "Returns pydantic field from django's model field"
     alias = None
@@ -168,7 +169,10 @@ def get_schema_field(
         default = PydanticUndefined
 
     if nullable:
-        python_type = Union[python_type, None]  # aka Optional in 3.7+
+        if nullable_wrapper:
+            python_type = nullable_wrapper[python_type]
+        else:
+            python_type = Union[python_type, None]  # aka Optional in 3.7+
 
     description = field.help_text or None
     title = title_if_lower(field.verbose_name)

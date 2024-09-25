@@ -1,6 +1,6 @@
 import warnings
 from inspect import getmembers
-from typing import List, Optional, Type, Union, no_type_check
+from typing import List, Optional, Type, Union, no_type_check, Any
 
 from django.db.models import Model as DjangoModel
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
@@ -21,6 +21,7 @@ class MetaConf(BaseModel):
     optional_fields: List of field names which will be optional, can also take '__all__'
     depth: If > 0 schema will also be created for the nested ForeignKeys and Many2Many (with the provided depth of lookup)
     primary_key_optional: Defaults to True, controls if django's primary_key=True field in the provided model is required
+    nullable_wrapper: A Type to wrap nullable fields in a Django model which would normally become Optional[<FieldType>]
 
     fields_optional: same as optional_fields, deprecated in order to match `create_schema()` API
     """
@@ -34,6 +35,7 @@ class MetaConf(BaseModel):
     optional_fields: Union[List[str], Literal["__all__"], None] = None
     depth: int = 0
     primary_key_optional: Optional[bool] = None
+    nullable_wrapper: Optional[Any] = None
     # deprecated
     fields_optional: Union[List[str], Literal["__all__"], None] = Field(
         default=None, exclude=True
