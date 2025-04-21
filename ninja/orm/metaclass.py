@@ -92,11 +92,13 @@ class ModelSchemaMetaclass(ResolverMetaclass):
             meta_conf = meta_conf.model_dump(exclude_none=True)
 
             fields = factory.convert_django_fields(**meta_conf)
+            namespace.setdefault("__annotations__", {})
             for field, val in fields.items():
-                # set type
-                namespace.setdefault("__annotations__", {})[field] = val[0]
-                # and default value
-                namespace[field] = val[1]
+                if not namespace["__annotations__"].get(field, None):
+                    # set type
+                    namespace["__annotations__"][field] = val[0]
+                    # and default value
+                    namespace[field] = val[1]
 
         cls = super().__new__(
             mcs,
