@@ -56,6 +56,7 @@ class SchemaFactory:
         custom_fields: Optional[List[Tuple[str, Any, Any]]] = None,
         base_class: Type[Schema] = Schema,
         primary_key_optional: bool = True,
+        nullable_wrapper = None,
     ) -> Type[Schema]:
         name = name or model.__name__
 
@@ -74,6 +75,7 @@ class SchemaFactory:
             exclude=exclude,
             optional_fields=optional_fields,
             primary_key_optional=primary_key_optional,
+            nullable_wrapper=nullable_wrapper
         )
 
         if custom_fields:
@@ -112,6 +114,7 @@ class SchemaFactory:
         exclude: Optional[List[str]] = None,
         optional_fields: Optional[List[str]] = None,
         primary_key_optional: bool = True,
+        nullable_wrapper = None,
     ) -> Dict[str, Tuple[Any, Any]]:
         if (fields and fields != "__all__") and exclude:
             raise ConfigError("Only one of 'fields' or 'exclude' should be set.")
@@ -127,6 +130,7 @@ class SchemaFactory:
                 depth=depth,
                 optional=optional_fields and (fld.name in optional_fields),
                 primary_key_optional=primary_key_optional,
+                nullable_wrapper=nullable_wrapper
             )
             definitions[fld.name] = (python_type, field_info)
 
