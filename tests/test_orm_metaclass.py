@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 from django.db import models
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from ninja import ModelSchema, Schema
 from ninja.errors import ConfigError
@@ -93,13 +93,13 @@ def test_config():
         class Meta:
             app_label = "tests"
 
-    with pytest.raises(ValidationError, match="Specify either `exclude` or `fields`"):
+    with pytest.raises(ConfigError, match="Specify either `exclude` or `fields`"):
 
         class CategorySchema1(ModelSchema):
             class Meta:
                 model = Category
 
-    with pytest.raises(ValidationError, match="Specify either `exclude` or `fields`"):
+    with pytest.raises(ConfigError, match="Specify either `exclude` or `fields`"):
 
         class CategorySchema2(ModelSchema):
             class Meta:
@@ -108,7 +108,7 @@ def test_config():
                 fields = ["title"]
 
     with pytest.raises(
-        ValidationError,
+        ConfigError,
         match="Use only `optional_fields`, `fields_optional` is deprecated.",
     ):
 
@@ -132,9 +132,28 @@ def test_config():
                 fields = "__all__"
 
     class CategorySchema5(ModelSchema):
-        class Config:
+        class Meta:
             model = Category
             fields = "__all__"
+
+    with pytest.raises(
+        ConfigError,
+        match=f"Field title from model {Category} already exists in the Schema",
+    ):
+
+        class CategorySchema6(CategorySchema5):
+            class Meta(CategorySchema5.Meta):
+                fields = ["title"]
+
+    with pytest.raises(
+        ConfigError,
+        match="class `Config` cannot be used to configure ModelSchema. Use `Meta` instead",
+    ):
+
+        class CategorySchema7(ModelSchema):
+            class Config:
+                model = Category
+                fields = "__all__"
 
 
 def test_optional():
@@ -233,7 +252,7 @@ def test_nondjango_model_error():
         field2 = models.CharField(blank=True, null=True)
 
     with pytest.raises(
-        ValidationError,
+        ConfigError,
         match=r"Input should be a subclass of Model \[type=is_subclass_of, input_value=<class 'test_orm_metaclas...locals>.NonDjangoModel'>, input_type=type\]",
     ):
 
@@ -274,8 +293,7 @@ def test_desired_inheritance():
         field2: str
 
         class Meta(ResourceModelSchema.Meta):
-            model = Item
-            fields = ["id", "slug"]
+            fields = ["slug"]
 
     assert issubclass(ItemModelSchema, BaseModel)
     assert ItemModelSchema.Meta.primary_key_optional is False
@@ -330,6 +348,7 @@ def test_specific_inheritance():
             app_label = "tests"
 
     class ItemBaseModelSchema(ModelSchema):
+        model_config = {"title": "Item Title"}
         is_favorite: Optional[bool] = None
 
         class Meta:
@@ -342,17 +361,17 @@ def test_specific_inheritance():
             ]
 
     class ItemInBasesSchema(ItemBaseModelSchema):
-        class Meta(ItemBaseModelSchema.Meta):
-            model = Item
-            fields = ItemBaseModelSchema.Meta.fields + ["length_in_mn"]
+        class Config:
+            allow_inf_nan = True
 
-    class ItemInMealsSchema(ItemBaseModelSchema):
         class Meta(ItemBaseModelSchema.Meta):
-            model = Item
-            fields = ItemBaseModelSchema.Meta.fields + [
-                "length_in_mn",
-                "special_field_for_meal",
-            ]
+            fields = ["length_in_mn"]
+
+    class ItemInMealsSchema(ItemInBasesSchema):
+        model_config = {"validate_default": True}
+
+        class Meta(ItemInBasesSchema.Meta):
+            fields = ["special_field_for_meal"]
 
     ibase = ItemBaseModelSchema(
         id=1,
@@ -379,6 +398,7 @@ def test_specific_inheritance():
         special_field_for_meal="char",
     )
 
+    assert ibase.model_config["title"] == "Item Title"
     assert (
         ibase.model_dump_json()
         == '{"is_favorite":false,"id":1,"slug":"slug","name":"item","image_path":"/images/image.png"}'
@@ -427,10 +447,11 @@ def test_specific_inheritance():
             "name",
             "image_path",
         ],
-        "title": "ItemBaseModelSchema",
+        "title": "Item Title",
         "type": "object",
     }
 
+    assert item_inbases.model_config["allow_inf_nan"] == True  # noqa: E712
     assert (
         item_inbases.model_dump_json()
         == '{"is_favorite":false,"id":2,"slug":"slug","name":"item","image_path":"/images/image.png","length_in_mn":2}'
@@ -484,10 +505,12 @@ def test_specific_inheritance():
             "image_path",
             "length_in_mn",
         ],
-        "title": "ItemInBasesSchema",
+        "title": "Item Title",
         "type": "object",
     }
 
+    assert item_inmeals.model_config["allow_inf_nan"] == True  # noqa: E712
+    assert item_inmeals.model_config["validate_default"] == True  # noqa: E712
     assert (
         item_inmeals.model_dump_json()
         == '{"is_favorite":false,"id":3,"slug":"slug","name":"item","image_path":"/images/image.png","length_in_mn":2,"special_field_for_meal":"char"}'
@@ -546,6 +569,41 @@ def test_specific_inheritance():
             "length_in_mn",
             "special_field_for_meal",
         ],
-        "title": "ItemInMealsSchema",
+        "title": "Item Title",
         "type": "object",
     }
+
+
+def test_pydantic_config_inheritance():
+    class User(models.Model):
+        firstname = models.CharField()
+        lastname = models.CharField(blank=True, null=True)
+
+        class Meta:
+            app_label = "tests"
+
+    class Grandparent(ModelSchema):
+        grandparent: str
+
+        class Config:
+            grandparent = "gpa"
+
+    class Parent(Grandparent):
+        parent: str
+
+        class Config:
+            parent = "parent"
+
+    class Child(Parent):
+        model_config = {"child": True}
+        child: str
+
+        class Meta:
+            model = User
+            fields = "__all__"
+
+    c = Child(firstname="user", lastname="name", grandparent="1", parent="2", child="3")
+
+    assert c.model_config["child"]
+    assert c.model_config["parent"]
+    assert c.model_config["grandparent"]

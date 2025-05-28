@@ -3,7 +3,14 @@ from inspect import getmembers
 from typing import List, Optional, Type, Union, no_type_check
 
 from django.db.models import Model as DjangoModel
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+)
 from typing_extensions import Literal, Self
 
 from ninja.errors import ConfigError
@@ -46,11 +53,11 @@ class MetaConf(BaseModel):
         if self.model and (
             (not self.exclude and not self.fields) or (self.exclude and self.fields)
         ):
-            raise ValueError("Specify either `exclude` or `fields`")
+            raise ConfigError("Specify either `exclude` or `fields`")
 
         if self.fields_optional:
             if self.optional_fields is not None:
-                raise ValueError(
+                raise ConfigError(
                     "Use only `optional_fields`, `fields_optional` is deprecated."
                 )
             warnings.warn(
@@ -71,26 +78,32 @@ class ModelSchemaMetaclass(ResolverMetaclass):
         namespace: dict,
         **kwargs,
     ):
-        conf_class = None
         meta_conf = None
+
+        if "Config" in namespace:
+            config_keys = {k for k, _ in getmembers(namespace["Config"])}
+            if any(k in config_keys for k in MetaConf.model_fields.keys()):
+                raise ConfigError(
+                    "class `Config` cannot be used to configure ModelSchema. Use `Meta` instead"
+                )
 
         if "Meta" in namespace:
             conf_class = namespace["Meta"]
-        elif "Config" in namespace:
-            conf_class = namespace["Config"]
-            warnings.warn(
-                "The use of `Config` class is deprecated for ModelSchema, use 'Meta' instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-        if conf_class:
             conf_dict = {
                 k: v for k, v in getmembers(conf_class) if not k.startswith("__")
             }
-            meta_conf = MetaConf.model_validate(conf_dict)
+            try:
+                meta_conf = MetaConf.model_validate(conf_dict)
+            except ValidationError as ve:
+                raise ConfigError(str(ve)) from ve
 
         if meta_conf and meta_conf.model:
+            existing_annotations_keys = set()
+            for base in bases:
+                existing_annotations_keys |= set(
+                    getattr(base, "__annotations__", {}).keys()
+                )
+
             meta_conf = meta_conf.model_dump(exclude_none=True)
 
             fields = factory.convert_django_fields(**meta_conf)
@@ -100,6 +113,21 @@ class ModelSchemaMetaclass(ResolverMetaclass):
                 if namespace.get("__annotations__", {}).get(field):
                     raise ConfigError(
                         f"'{field}' is defined in class body and in Meta.fields or implicitly in Meta.excluded"
+                    )
+                # NOTE: the check below disables the ability to declare any already existing fields on ModelSchema children
+                # class ItemSlimSchema(ModelSchema):
+                #     class Meta:
+                #         model = Item
+                #         fields = ["id", "name"]
+                #
+                # class ItemSchema(ItemSlimSchema):
+                #     class Meta(ItemSlimSchema.Meta):
+                #         fields = ["type", "desc"] <-- will work with inheritting from the parent.Meta, other fields already exist
+                #                                       on the underlying pydantic model
+                #         fields = ["id", "name", "type", "desc"] <-- won't work, inheriting from parent.Meta or not
+                if field in existing_annotations_keys:
+                    raise ConfigError(
+                        f"Field {field} from model {meta_conf['model']} already exists in the Schema"
                     )
                 # set type
                 namespace.setdefault("__annotations__", {})[field] = val[0]
