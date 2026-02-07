@@ -278,16 +278,16 @@ class OpenAPISchema(dict):
             "required": required,
         }
 
-    def responses(self, operation: Operation) -> Dict[int, DictStrAny]:
+    def responses(self, operation: Operation) -> Dict[str, DictStrAny]:
         assert bool(operation.response_models), f"{operation.response_models} empty"
 
         result = {}
         for status, model in operation.response_models.items():
             if status == Ellipsis:
                 continue  # it's not yet clear what it means if user wants to output any other code
-
             description = responses.get(status, "Unknown Status Code")
-            details: Dict[int, Any] = {status: {"description": description}}
+            status = str(status)  # status code in the openapi spec is a string
+            details: Dict[str, Any] = {status: {"description": description}}
             if model not in [None, NOT_SET]:
                 # ::TODO:: test this: by_alias == True
                 schema = self._create_schema_from_model(
