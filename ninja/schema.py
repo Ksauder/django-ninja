@@ -184,26 +184,7 @@ class ResolverMetaclass(ModelMetaclass):
 
 
 class NinjaGenerateJsonSchema(GenerateJsonSchema):
-    def default_schema(self, schema: Any) -> JsonSchemaValue:
-        # Pydantic default actually renders null's and default_factory's
-        # which really breaks swagger and django model callable defaults
-        # so here we completely override behavior
-        json_schema = self.generate_inner(schema["schema"])
-
-        default = None
-        if "default" in schema and schema["default"] is not None:
-            default = self.encode_default(schema["default"])
-
-        if "$ref" in json_schema:
-            # Since reference schemas do not support child keys, we wrap the reference schema in a single-case allOf:
-            result = {"allOf": [json_schema]}
-        else:
-            result = json_schema
-
-        if default is not None:
-            result["default"] = default
-
-        return result
+    pass
 
 
 class Schema(BaseModel, metaclass=ResolverMetaclass):
