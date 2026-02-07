@@ -324,6 +324,7 @@ def test_case4():
             "name": "page_size",
             "schema": {
                 "anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}],
+                "default": None,
                 "title": "Page Size",
             },
             "required": False,
@@ -354,6 +355,7 @@ def test_case4_page_size():
             "name": "page_size",
             "schema": {
                 "anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}],
+                "default": None,
                 "title": "Page Size",
             },
             "required": False,
@@ -384,6 +386,7 @@ def test_case4_no_page_param():
             "name": "page_size",
             "schema": {
                 "anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}],
+                "default": None,
                 "title": "Page Size",
             },
             "required": False,
@@ -414,6 +417,7 @@ def test_case4_out_of_range():
             "name": "page_size",
             "schema": {
                 "anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}],
+                "default": None,
                 "title": "Page Size",
             },
             "required": False,
@@ -444,6 +448,7 @@ def test_case5_no_kwargs():
             "name": "page_size",
             "schema": {
                 "anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}],
+                "default": None,
                 "title": "Page Size",
             },
             "required": False,
@@ -475,6 +480,7 @@ def test_case6_pass_param_kwargs():
             "name": "page_size",
             "schema": {
                 "anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}],
+                "default": None,
                 "title": "Page Size",
             },
             "required": False,
@@ -533,6 +539,7 @@ def test_case10_max_page_size():
             "name": "page_size",
             "schema": {
                 "anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}],
+                "default": None,
                 "title": "Page Size",
             },
             "required": False,

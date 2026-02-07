@@ -137,8 +137,7 @@ def test_schema():
             "in": "query",
             "name": "range",
             "schema": {
-                "allOf": [{"enum": [20, 50, 200], "title": "Range", "type": "integer"}],
-                "default": 20,
+                "enum": [20, 50, 200], "title": "Range", "type": "integer",
             },
             "required": False,
         },

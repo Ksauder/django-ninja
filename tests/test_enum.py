@@ -126,7 +126,7 @@ def test_schema():
         # pydantic 1.7+ change:
         assert room_prop["allOf"] == [{"$ref": "#/components/schemas/RoomEnum"}]
     else:
-        assert room_prop == {"$ref": "#/components/schemas/RoomEnum"}
+        assert room_prop == {"$ref": "#/components/schemas/RoomEnum", "default": "double"}
 
     assert schema["components"]["schemas"]["RoomEnum"] == {
         "enum": ["double", "twin", "single"],
@@ -160,6 +160,7 @@ def test_schema():
         "schema": {
             "anyOf": [{"$ref": "#/components/schemas/RoomEnum"}, {"type": "null"}],
             "description": "description",
+            "default": None,
         },
         "required": False,
         "description": "description",
@@ -171,6 +172,7 @@ def test_schema():
         "name": "q",
         "required": False,
         "schema": {
+            "default": None,
             "description": "description",
             "title": "Q",
             "items": {

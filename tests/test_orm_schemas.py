@@ -34,7 +34,7 @@ def test_inheritance():
         "title": "ChildModel",
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "parent_field": {"type": "string", "title": "Parent Field"},
             "parentmodel_ptr_id": {"type": "integer", "title": "Parentmodel Ptr"},
             "child_field": {"type": "string", "title": "Child Field"},
@@ -88,7 +88,7 @@ def test_all_fields():
         "title": "AllFields",
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "bigintegerfield": {"title": "Bigintegerfield", "type": "integer"},
             "binaryfield": {
                 "title": "Binaryfield",
@@ -232,6 +232,7 @@ def test_altautofield():
             "autofield": {
                 "anyOf": [{"type": "integer"}, {"type": "null"}],
                 "title": "Autofield",
+                "default": None
             }
         }
 
@@ -250,7 +251,7 @@ def test_django_31_fields():
         "title": "ModelNewFields",
         "type": "object",
         "properties": {
-            "id": {"title": "ID", "anyOf": [{"type": "integer"}, {"type": "null"}]},
+            "id": {"title": "ID", "anyOf": [{"type": "integer"}, {"type": "null"}], "default": None},
             "jsonfield": {"title": "Jsonfield", "type": "object"},
             "positivebigintegerfield": {
                 "title": "Positivebigintegerfield",
@@ -289,11 +290,12 @@ def test_relational():
         "title": "TestSchema",
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "onetoonefield_id": {"title": "Onetoonefield", "type": "integer"},
             "foreignkey_id": {
                 "anyOf": [{"type": "integer"}, {"type": "null"}],
                 "title": "Foreignkey",
+                "default": None
             },
             "manytomanyfield": {
                 "title": "Manytomanyfield",
@@ -309,7 +311,7 @@ def test_relational():
     assert SchemaClsDeep.json_schema() == {
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "onetoonefield": pydantic_ref_fix({
                 "title": "Onetoonefield",
                 "description": "",
@@ -317,8 +319,9 @@ def test_relational():
             }),
             "foreignkey": {
                 "title": "Foreignkey",
-                "allOf": [{"$ref": "#/$defs/Related"}],
+                "$ref": "#/$defs/Related",
                 "description": "",
+                "default": None
             },
             "manytomanyfield": {
                 "title": "Manytomanyfield",
@@ -337,6 +340,7 @@ def test_relational():
                     "id": {
                         "anyOf": [{"type": "integer"}, {"type": "null"}],
                         "title": "ID",
+                        "default": None,
                     },
                     "charfield": {"type": "string", "title": "Charfield"},
                 },
@@ -360,7 +364,7 @@ def test_default():
         "title": "MyModel",
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "default_static": {
                 "default": "hello",
                 "title": "Default Static",
@@ -409,7 +413,7 @@ def test_fields_exclude():
     assert Schema3.json_schema() == {
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "f1": {"type": "string", "title": "F1"},
             "f2": {"type": "string", "title": "F2"},
         },
@@ -458,7 +462,7 @@ def test_with_relations():
         "title": "Category",
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "title": {"title": "Title", "maxLength": 100, "type": "string"},
         },
         "required": ["title"],
@@ -512,7 +516,7 @@ def test_custom_fields():
     assert Schema1.json_schema() == {
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "f1": {"type": "string", "title": "F1"},
             "f2": {"type": "string", "title": "F2"},
             "custom": {"type": "integer", "title": "Custom"},
@@ -527,7 +531,7 @@ def test_custom_fields():
     assert Schema2.json_schema() == {
         "type": "object",
         "properties": {
-            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID"},
+            "id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "ID", "default": None},
             "f1": {"type": "integer", "title": "F1"},
             "f2": {"type": "string", "title": "F2"},
         },

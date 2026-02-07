@@ -57,14 +57,17 @@ def test_schema():
             "name": {
                 "anyOf": [{"type": "string"}, {"type": "null"}],
                 "title": "Name",
+                "default": None,
             },
             "age": {
                 "anyOf": [{"type": "integer"}, {"type": "null"}],
                 "title": "Age",
+                "default": None,
             },
             "category": {
                 "anyOf": [{"type": "string"}, {"type": "null"}],
                 "title": "Category",
+                "default": None,
             },
         },
     }
@@ -88,14 +91,17 @@ def test_inherited_schema():
             "name": {
                 "anyOf": [{"type": "string"}, {"type": "null"}],
                 "title": "Name",
+                "default": None,
             },
             "age": {
                 "anyOf": [{"type": "integer"}, {"type": "null"}],
                 "title": "Age",
+                "default": None,
             },
             "other": {
                 "anyOf": [{"type": "string"}, {"type": "null"}],
                 "title": "Other",
+                "default": None,
             },
             "category": {
                 "anyOf": [
@@ -108,6 +114,7 @@ def test_inherited_schema():
                     {"type": "null"},
                 ],
                 "title": "Category",
+                "default": None,
             },
         },
     }

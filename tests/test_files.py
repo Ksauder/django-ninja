@@ -112,7 +112,7 @@ def test_schema():
         {
             "type": "object",
             "properties": {
-                "file": {"type": "string", "format": "binary", "title": "File"}
+                "file": {"default": None, "type": "string", "format": "binary", "title": "File"}
             },
             "title": "FileParams",
         },

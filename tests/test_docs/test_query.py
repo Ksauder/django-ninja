@@ -111,19 +111,20 @@ def test_examples():
             {
                 "in": "query",
                 "name": "offset",
-                "schema": {"title": "Offset", "type": "integer"},
+                "schema": {"default": None, "title": "Offset", "type": "integer"},
                 "required": False,
             },
             {
                 "in": "query",
                 "name": "query",
-                "schema": {"title": "Query", "type": "string"},
+                "schema": {"default": None, "title": "Query", "type": "string"},
                 "required": False,
             },
             {
                 "in": "query",
                 "name": "categories",
                 "schema": {
+                    "default": None, 
                     "items": {"type": "string"},
                     "title": "Categories",
                     "type": "array",

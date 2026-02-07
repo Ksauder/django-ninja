@@ -41,7 +41,7 @@ def test_schema():
             "application/x-www-form-urlencoded": {
                 "schema": {
                     "properties": {
-                        "i": {"type": "integer", "title": "I"},
+                        "i": {"default": None, "type": "integer", "title": "I"},
                         "s": {"type": "string", "title": "S"},
                     },
                     "required": ["s"],

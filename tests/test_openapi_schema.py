@@ -761,7 +761,7 @@ def test_schema_deprecated_example_examples(schema):
             "in": "query",
             "name": "param1",
             "required": False,
-            "schema": {"title": "Param1", "type": "integer", "deprecated": True},
+            "schema": {"default": None, "title": "Param1", "type": "integer", "deprecated": True},
         },
         {
             "in": "query",

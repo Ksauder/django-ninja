@@ -62,7 +62,7 @@ def test_orm_config():
         "type": "object",
         "properties": {
             "f1": {"title": "F1", "type": "string"},
-            "f2": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "F2"},
+            "f2": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "F2", "default": None},
             "f3": {"title": "F3", "type": "integer"},
             "f4": {"title": "F4", "default": 1, "type": "integer"},
         },
