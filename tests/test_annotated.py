@@ -125,7 +125,7 @@ def test_openapi_schema():
                         "description": "Cookie params",
                     },
                 ],
-                "responses": {200: {"description": "OK"}},
+                "responses": {"200": {"description": "OK"}},
                 "requestBody": {
                     "content": {
                         "application/x-www-form-urlencoded": {
@@ -162,7 +162,7 @@ def test_openapi_schema():
                         "description": "User ID",
                     }
                 ],
-                "responses": {200: {"description": "OK"}},
+                "responses": {"200": {"description": "OK"}},
             }
         },
         "/api/headers": {
@@ -181,7 +181,7 @@ def test_openapi_schema():
                         "required": False,
                     }
                 ],
-                "responses": {200: {"description": "OK"}},
+                "responses": {"200": {"description": "OK"}},
             }
         },
         "/api/body": {
@@ -189,7 +189,7 @@ def test_openapi_schema():
                 "operationId": "test_annotated_body_op",
                 "summary": "Body Op",
                 "parameters": [],
-                "responses": {200: {"description": "OK"}},
+                "responses": {"200": {"description": "OK"}},
                 "requestBody": {
                     "content": {
                         "application/json": {

@@ -246,7 +246,7 @@ def test_schema(schema):
         "required": True,
     }
     assert method["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/Response"}
@@ -303,7 +303,7 @@ def test_schema_alias(schema):
         "required": True,
     }
     assert method["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/Response"}
@@ -353,7 +353,7 @@ def test_schema_list(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {
@@ -425,7 +425,7 @@ def test_schema_body(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/Response"}
@@ -446,7 +446,7 @@ def test_schema_body_schema(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/Response"}
@@ -478,7 +478,7 @@ def test_schema_path(schema):
     ]
 
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/Response"},
@@ -516,7 +516,7 @@ def test_schema_pathex(schema):
     ]
 
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {
@@ -552,7 +552,7 @@ def test_schema_form(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "description": "OK",
             "content": {
                 "application/json": {
@@ -580,7 +580,7 @@ def test_schema_single(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "description": "OK",
             "content": {
                 "application/json": {
@@ -610,7 +610,7 @@ def test_schema_form_body(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "description": "OK",
             "content": {
                 "application/json": {
@@ -646,7 +646,7 @@ def test_schema_form_file(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "description": "OK",
             "content": {
                 "application/json": {
@@ -681,7 +681,7 @@ def test_schema_body_file(schema):
         "required": True,
     }
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "description": "OK",
             "content": {
                 "application/json": {
@@ -741,7 +741,7 @@ def test_schema_title_description(schema):
     ]
 
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/Response"}
@@ -805,7 +805,7 @@ def test_schema_deprecated_example_examples(schema):
     ]
 
     assert method_list["responses"] == {
-        200: {
+        "200": {
             "description": "OK",
         }
     }
@@ -937,7 +937,7 @@ def test_renderer_media_type():
     schema = api.get_openapi_schema()
     method = schema["paths"]["/api/1"]["get"]
     assert method["responses"] == {
-        200: {
+        "200": {
             "content": {
                 "custom/type": {"schema": {"$ref": "#/components/schemas/TypeA"}}
             },

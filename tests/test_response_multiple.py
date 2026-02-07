@@ -115,13 +115,13 @@ def test_responses(path, expected_status, expected_response):
 
 def test_schema():
     checks = [
-        ("/api/check_int", {200}),
-        ("/api/check_int2", {200}),
-        ("/api/check_single_with_status", {200}),
-        ("/api/check_response_schema", {400}),
-        ("/api/check_model", {200, 202}),
-        ("/api/check_list_model", {200}),
-        ("/api/check_union", {200, 400}),
+        ("/api/check_int", {"200"}),
+        ("/api/check_int2", {"200"}),
+        ("/api/check_single_with_status", {"200"}),
+        ("/api/check_response_schema", {"400"}),
+        ("/api/check_model", {"200", "202"}),
+        ("/api/check_list_model", {"200"}),
+        ("/api/check_union", {"200", "400"}),
     ]
     schema = api.get_openapi_schema()
 
@@ -135,7 +135,7 @@ def test_schema():
     check_model_responses = schema["paths"]["/api/check_model"]["get"]["responses"]
 
     assert check_model_responses == {
-        200: {
+        "200": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/UserModel"}
@@ -143,7 +143,7 @@ def test_schema():
             },
             "description": "OK",
         },
-        202: {
+        "202": {
             "content": {
                 "application/json": {
                     "schema": {"$ref": "#/components/schemas/UserModel"}
@@ -165,7 +165,7 @@ def test_no_content():
 
     schema = api.get_openapi_schema()
     details = schema["paths"]["/api/check_no_content"]["get"]["responses"]
-    assert details == {204: {"description": "No Content"}}
+    assert details == {"204": {"description": "No Content"}}
 
 
 def test_validates():

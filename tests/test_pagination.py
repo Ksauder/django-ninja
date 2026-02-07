@@ -493,7 +493,7 @@ def test_case7():
     assert response == [10, 11, 12, 13, 14]
 
     schema = api.get_openapi_schema()["paths"]["/api/items_7"]["get"]
-    response = schema["responses"][200]["content"]["application/json"]["schema"]
+    response = schema["responses"]["200"]["content"]["application/json"]["schema"]
 
     assert response == {
         "title": "Response",
