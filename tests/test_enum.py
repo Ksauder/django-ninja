@@ -51,7 +51,7 @@ def enum_optional2(request, extra: Optional[ExtraEnum] = None):
 
 
 @api.get("/list")
-def enum_list(request, rooms: List[RoomEnum] = Query(None, description="description")):
+def enum_list(request, rooms: Optional[List[RoomEnum]] = Query(None, description="description")):
     return {"rooms": rooms}
 
 
@@ -62,7 +62,7 @@ class QueryOnlyEnum(str, Enum):
 
 @api.get("/new-list")
 def new_enum_list(
-    request, q: List[QueryOnlyEnum] = Query(None, description="description")
+    request, q: Optional[List[QueryOnlyEnum]] = Query(None, description="description")
 ):
     return {"q": q}
 
@@ -175,12 +175,17 @@ def test_schema():
             "default": None,
             "description": "description",
             "title": "Q",
-            "items": {
-                "enum": ["one", "two"],
-                "title": "QueryOnlyEnum",
-                "type": "string",
-            },
-            "type": "array",
+            "anyOf": [
+                {
+                    "items": {
+                        "$ref": "#/components/schemas/QueryOnlyEnum"
+                    },
+                    "type": "array"
+                },
+                {
+                    "type": "null"
+                }
+            ],
         },
     }
 
