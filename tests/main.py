@@ -83,7 +83,7 @@ else:
 
 
 @router.get("/path/param/{item_id}")
-def get_path_param_id(request, item_id: str = Path(None)):
+def get_path_param_id(request, item_id: str = Path(...)):
     return item_id
 
 
@@ -242,7 +242,7 @@ def get_query(request, query):
 
 
 @router.get("/query/optional")
-def get_query_optional(request, query=None):
+def get_query_optional(request, query: Optional[str] = None):
     if query is None:
         return "foo bar"
     return f"foo bar {query}"
@@ -254,7 +254,7 @@ def get_query_type(request, query: int):
 
 
 @router.get("/query/int/optional")
-def get_query_type_optional(request, query: int = None):
+def get_query_type_optional(request, query: Optional[int] = None):
     if query is None:
         return "foo bar"
     return f"foo bar {query}"
@@ -278,7 +278,7 @@ def get_query_optional_list(request, query: Optional[List[str]] = Query(None)):
 
 
 @router.get("/query/param")
-def get_query_param(request, query=Query(None)):
+def get_query_param(request, query: Optional[str] = Query(None)):
     if query is None:
         return "foo bar"
     return f"foo bar {query}"
