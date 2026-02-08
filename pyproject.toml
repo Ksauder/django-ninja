@@ -64,6 +64,7 @@ test = [
     "mypy==1.7.1",
     "ruff==0.5.7",
     "django-stubs",
+    "openapi-spec-validator",
 ]
 doc = ["mkdocs", "mkdocs-material", "markdown-include", "mkdocstrings"]
 dev = ["pre-commit"]
